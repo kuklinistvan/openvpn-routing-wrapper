@@ -4,9 +4,9 @@ OpenVPN has introduced quite a serious bug which causes the routing commands to 
 
 ## Usage
 
-Estabilish your connection with the wrapper:
+Pipe the output of OpenVPN to this wrapper.
 
-    ./openvpn-routing-wrapper.py openvpn client.conf
-    
+    sudo openvpn company.conf | sudo openvpn-routing-wrapper.py
+
 
 

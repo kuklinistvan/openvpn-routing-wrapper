@@ -2,74 +2,80 @@
 
 import ipdb
 import sys
-import subprocess
+import os
 import time
 
-def execute(cmd):
+class ColorPrint:
     '''
-    Origin: https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
+    Origin:
+    https://stackoverflow.com/questions/39473297/how-do-i-print-colored-output-with-python-3
+    '''
 
-    Arguments:
-    cmd - A list with the command and its arguments in it.
-    '''
-    # popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-    popen = subprocess.Popen(cmd, stdout=subprocess.fout, stdin=subprocess.fin, universal_newlines=True)
-    for stdout_line in iter(popen.stdout.readline, ""):
-        yield stdout_line 
-    popen.stdout.close()
-    return_code = popen.wait()
-    if return_code:
-        raise subprocess.CalledProcessError(return_code, cmd)
+    @staticmethod
+    def print_fail(message, end = '\n'):
+        sys.stderr.write('\x1b[1;31m' + message.strip() + '\x1b[0m' + end)
+
+    @staticmethod
+    def print_pass(message, end = '\n'):
+        sys.stdout.write('\x1b[1;32m' + message.strip() + '\x1b[0m' + end)
+
+    @staticmethod
+    def print_warn(message, end = '\n'):
+        sys.stderr.write('\x1b[1;33m' + message.strip() + '\x1b[0m' + end)
+
+    @staticmethod
+    def print_info(message, end = '\n'):
+        sys.stdout.write('\x1b[1;34m' + message.strip() + '\x1b[0m' + end)
+
+    @staticmethod
+    def print_bold(message, end = '\n'):
+        sys.stdout.write('\x1b[1;37m' + message.strip() + '\x1b[0m' + end)
 
 def get_cmd_from_log(log_line):
     '''
     Converts a line like this:
     Sun Aug 19 12:05:20 2018 /usr/bin/ip link set dev tun0 up mtu 1500
     To this:
-    ["/usr/bin/ip", "link", "set", "dev", "tun0", "up", "mtu", "1500"]
+    /usr/bin/ip link set dev tun0 up mtu 1500
     '''
 
     cmd_string = log_line[log_line.find("/usr/bin"):]
-    cmd = cmd_string.split()
 
-    return cmd
+    return cmd_string
 
 def main():
-    print("==================================================\n"
-          "You're running OPENVPN ROUTING WRAPPER\n"
-          "See the original bug at\n"
-          "https://community.openvpn.net/openvpn/ticket/1086\n"
-          "==================================================\n")
 
-    exec_cmd = sys.argv[1:]   
-    print("Executing: ", end="")
-    print(*exec_cmd)
+    print("\n")
+    ColorPrint.print_info("==================================================\n"
+                          "You're running OPENVPN ROUTING WRAPPER\n"
+                          "See the original bug at\n"
+                          "https://community.openvpn.net/openvpn/ticket/1086\n"
+                          "==================================================")
+    print()
 
     routing_cmds = []
 
-    # print("Not implemented.")
-    # exit(1)
-    
-    for line in execute(exec_cmd):
+    for line in sys.stdin:
+        print(line, end="")
+        
         if "/usr/bin" in line:
-            print("++ Recording route command ++")
+            ColorPrint.print_info("---> Recording route command")
             routing_cmds.append(get_cmd_from_log(line))
         
         if "Initialization Sequence Completed" in line:
 
             wait_seconds = 3
             
-            print("Waiting " + wait_seconds + " seconds...")
+            ColorPrint.print_info("Waiting " + str(wait_seconds) + " seconds...")
             time.sleep(wait_seconds)
 
-            print("RE-EXECUTING ROUTING CMDS")
+            ColorPrint.print_warn("RE-EXECUTING ROUTING CMDS")
             
             for cmd in routing_cmds:
+                ColorPrint.print_bold(cmd)
                 os.system(cmd)
 
-            print("Wrapping done. Leave me open.")
-            
-        print(line, end="")
+            ColorPrint.print_pass("Wrapping done. Leave me open.")           
 
         
 if __name__ == '__main__':
