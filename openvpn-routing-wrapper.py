@@ -12,7 +12,8 @@ def execute(cmd):
     Arguments:
     cmd - A list with the command and its arguments in it.
     '''
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    # popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    popen = subprocess.Popen(cmd, stdout=subprocess.fout, stdin=subprocess.fin, universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line 
     popen.stdout.close()
@@ -46,8 +47,12 @@ def main():
 
     routing_cmds = []
 
+    # print("Not implemented.")
+    # exit(1)
+    
     for line in execute(exec_cmd):
         if "/usr/bin" in line:
+            print("++ Recording route command ++")
             routing_cmds.append(get_cmd_from_log(line))
         
         if "Initialization Sequence Completed" in line:
